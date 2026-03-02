@@ -1,0 +1,44 @@
+[
+  {
+    "id": "1",
+    "title": "Flutter Apprentice",
+    "type": "book",
+    "status": "inProgress",
+    "createdAt": "2023-10-01T10:00:00.000Z",
+    "rating": 4.5
+  },
+  {
+    "id": "2",
+    "title": "Inception",
+    "type": "movie",
+    "status": "completed",
+    "createdAt": "2023-09-15T20:30:00.000Z",
+    "dateCompleted": "2023-09-15T23:00:00.000Z",
+    "rating": 5.0,
+    "review": "A masterpiece!"
+  },
+  {
+    "id": "3",
+    "title": "Bohemian Rhapsody",
+    "type": "song",
+    "status": "completed",
+    "createdAt": "2023-01-01T12:00:00.000Z",
+    "rating": 5.0
+  },
+  {
+    "id": "4",
+    "title": "The Last of Us Part II",
+    "type": "game",
+    "status": "completed",
+    "createdAt": "2023-06-20T15:00:00.000Z",
+    "dateCompleted": "2023-07-05T22:00:00.000Z",
+    "rating": 4.8
+  },
+  {
+    "id": "5",
+    "title": "Painting",
+    "type": "hobby",
+    "status": "inProgress",
+    "createdAt": "2023-08-01T09:00:00.000Z"
+  }
+]
