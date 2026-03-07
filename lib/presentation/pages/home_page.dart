@@ -5,6 +5,7 @@ import '../../logic/blocs/backlog_bloc.dart';
 import '../../models/backlog_item.dart';
 import '../widgets/backlog_list_item.dart';
 import 'add_edit_item_page.dart';
+import 'search_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -70,7 +71,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const AddEditItemPage()),
+            MaterialPageRoute(builder: (context) => const SearchPage()),
           );
         },
         label: const Text("Add New"),

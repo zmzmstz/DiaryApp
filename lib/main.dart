@@ -3,8 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'data/repositories/backlog_repository.dart';
+import 'data/repositories/api_repository.dart';
 import 'logic/blocs/backlog_bloc.dart';
-import 'presentation/pages/main_screen.dart';
+import 'logic/blocs/search_bloc.dart';
+import 'presentation/pages/auth_gate.dart';
 
 class SimpleBlocObserver extends BlocObserver {
   @override
@@ -37,13 +39,26 @@ void main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
+  static final rootMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
   @override
   Widget build(BuildContext context) {
-    return RepositoryProvider(
-      create: (context) => BacklogRepository(),
-      child: BlocProvider(
-        create: (context) => BacklogBloc(context.read<BacklogRepository>())..add(LoadBacklogItems()),
+    return MultiRepositoryProvider(
+      providers: [
+        RepositoryProvider(create: (context) => BacklogRepository()),
+        RepositoryProvider(create: (context) => ApiRepository()),
+      ],
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider(
+            create: (context) => BacklogBloc(context.read<BacklogRepository>())..add(LoadBacklogItems()),
+          ),
+          BlocProvider(
+            create: (context) => SearchBloc(context.read<ApiRepository>()),
+          ),
+        ],
         child: MaterialApp(
+          scaffoldMessengerKey: rootMessengerKey,
           title: 'Backlog App',
           debugShowCheckedModeBanner: false,
           theme: ThemeData(
@@ -63,7 +78,7 @@ class MyApp extends StatelessWidget {
             textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme),
           ),
           themeMode: ThemeMode.system,
-          home: const MainScreen(),
+          home: const AuthGate(),
         ),
       ),
     );

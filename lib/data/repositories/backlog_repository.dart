@@ -1,88 +1,117 @@
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:mongo_dart/mongo_dart.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../../models/app_user.dart';
 import '../../models/backlog_item.dart';
 
 class BacklogRepository {
-  // MongoDB Connection String
-  // Getting connection string from .env file
-  String get _mongoDbUri => dotenv.env['DB_URI'] ?? ""; 
-  static const String _collectionName = "backlog_items";
+  static const String _pcIp = '192.168.1.105';
+  static const String _baseUrl = 'http://$_pcIp:5038/api';
 
-  Db? _db;
-  DbCollection? _collection;
+  String? _currentUsername;
 
-  Future<void> _init() async {
-    if (_db != null && _db!.isConnected) return;
-    
-    try {
-      if (_mongoDbUri.isEmpty) {
-        print("ERROR: DB_URI not found in .env file");
-        return;
-      }
-
-      _db = await Db.create(_mongoDbUri);
-      await _db!.open();
-      _collection = _db!.collection(_collectionName);
-      print("Connected to MongoDB!");
-    } catch (e) {
-      print("MongoDB Connection Error: $e");
-    }
+  void setCurrentUser(String username) {
+    _currentUsername = username;
   }
+
+  // ─── Backlog CRUD ──────────────────────────────────
 
   Future<List<BacklogItem>> getBacklogItems() async {
     try {
-      await _init();
-      if (_collection == null) return [];
-
-      final List<Map<String, dynamic>> data = await _collection!.find().toList();
-      print("Fetched ${data.length} items from MongoDB");
-      
-      return data.map((e) {
-        // Mongo adds an '_id' field, but we use our own 'id'.
-        // We just ignore '_id' when converting to BacklogItem as it's not in our model (or handled).
-        // Ensure your model handles extra fields gracefully or just pass the map.
-        return BacklogItem.fromJson(e);
-      }).toList();
+      if (_currentUsername == null) return [];
+      final response = await http.get(
+        Uri.parse('$_baseUrl/backlog/$_currentUsername'),
+      );
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data
+            .map((e) => BacklogItem.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+      return [];
     } catch (e) {
-      print("Error loading data from MongoDB: $e");
+      print("Error loading backlog: $e");
       return [];
     }
   }
 
-  // Legacy method kept for compatibility, but we should use specific CRUD methods
-  Future<void> saveBacklogItems(List<BacklogItem> items) async {
-    // This method was used to overwrite the local file. 
-    // In a database context, we shouldn't overwrite the whole collection.
-    // However, if the Bloc relies on this, we might need to implement a bulk update or ignore it.
-    // Ideally, the Bloc should call add/update/delete.
-    print("Warning: saveBacklogItems called. Use add/update/delete for MongoDB efficiency.");
-  }
+  Future<void> saveBacklogItems(List<BacklogItem> items) async {}
 
   Future<void> addBacklogItem(BacklogItem item) async {
-    await _init();
-    if (_collection != null) {
-      await _collection!.insert(item.toJson());
-      print("Inserted item ${item.title} into MongoDB");
-    }
+    final body = item.toJson();
+    body['owner'] = _currentUsername;
+    await http.post(
+      Uri.parse('$_baseUrl/backlog'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(body),
+    );
   }
 
   Future<void> updateBacklogItem(BacklogItem item) async {
-    await _init();
-    if (_collection != null) {
-      // Find by our custom 'id' field
-      await _collection!.update(
-        where.eq('id', item.id),
-        item.toJson(),
-      );
-      print("Updated item ${item.title} in MongoDB");
-    }
+    final body = item.toJson();
+    body['owner'] = _currentUsername;
+    await http.put(
+      Uri.parse('$_baseUrl/backlog/${item.id}'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(body),
+    );
   }
 
   Future<void> deleteBacklogItem(String id) async {
-    await _init();
-    if (_collection != null) {
-      await _collection!.remove(where.eq('id', id));
-      print("Deleted item $id from MongoDB");
+    await http.delete(Uri.parse('$_baseUrl/backlog/$id'));
+  }
+
+  // ─── Auth ──────────────────────────────────────────
+
+  Future<AppUser?> login(String username, String password) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/auth/login'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'username': username, 'password': password}),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final user = AppUser(
+          username: data['username'] as String,
+          displayName: data['displayName'] as String,
+        );
+        _currentUsername = user.username;
+        return user;
+      }
+      return null;
+    } catch (e) {
+      print("Login error: $e");
+      return null;
     }
+  }
+
+  Future<AppUser> register({
+    required String username,
+    required String password,
+    required String displayName,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$_baseUrl/auth/register'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'username': username,
+        'password': password,
+        'displayName': displayName,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final user = AppUser(
+        username: data['username'] as String,
+        displayName: data['displayName'] as String,
+      );
+      _currentUsername = user.username;
+      return user;
+    }
+
+    final error = jsonDecode(response.body);
+    throw Exception(error['error'] ?? 'Registration failed');
   }
 }

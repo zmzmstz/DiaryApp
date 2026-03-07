@@ -25,19 +25,31 @@ class BacklogBloc extends Bloc<BacklogEvent, BacklogState> {
     }
   }
 
+  bool isDuplicate(BacklogItem newItem) {
+    final currentState = state;
+    if (currentState is BacklogLoaded) {
+      return currentState.items.any((existing) =>
+          existing.title.toLowerCase().trim() ==
+              newItem.title.toLowerCase().trim() &&
+          existing.type == newItem.type);
+    }
+    return false;
+  }
+
   Future<void> _onAddBacklogItem(AddBacklogItem event, Emitter<BacklogState> emit) async {
     final currentState = state;
     if (currentState is BacklogLoaded) {
-      // Optimistic update
+      if (isDuplicate(event.item)) return;
+
       final currentList = currentState.items;
       final newList = List<BacklogItem>.from(currentList)..add(event.item);
       emit(BacklogLoaded(newList));
-      
+
       try {
         await _repository.addBacklogItem(event.item);
       } catch (e) {
         emit(BacklogError("Failed to add item: $e"));
-        emit(BacklogLoaded(currentList)); // Revert
+        emit(BacklogLoaded(currentList));
       }
     }
   }
