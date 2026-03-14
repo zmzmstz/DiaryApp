@@ -32,7 +32,7 @@ cp .env.example .env
 ```bash
 cd server
 npm install
-node index.js
+npm start
 ```
 
 Basarili olursa `Connected to MongoDB` ve `API server running on http://0.0.0.0:5038` mesajlarini goreceksiniz.
@@ -56,8 +56,13 @@ flutter run
 │   ├── models/             # Veri modelleri
 │   └── presentation/       # UI sayfalari ve widgetlar
 ├── server/                 # Express.js backend API
-│   ├── index.js            # API endpointleri
-│   └── package.json        # Node.js bagimliliklari
+│   ├── index.js            # Bootstrap (server start + shutdown)
+│   ├── package.json        # Node.js bagimliliklari
+│   └── src/
+│       ├── config/         # Env + Mongo baglanti ayarlari
+│       ├── middlewares/    # Auth + error handling
+│       ├── modules/        # auth, backlog, search modulleri
+│       └── routes/         # Merkez route kayitlari
 ├── .env.example            # Ornek environment degiskenleri
 └── pubspec.yaml            # Flutter bagimliliklari
 ```
@@ -66,9 +71,23 @@ flutter run
 
 | Method | Endpoint | Aciklama |
 |--------|----------|----------|
-| POST | /api/auth/register | Yeni hesap olustur |
-| POST | /api/auth/login | Giris yap |
-| GET | /api/backlog/:username | Kullanicinin backlog listesi |
-| POST | /api/backlog | Backlog'a ekle |
-| PUT | /api/backlog/:id | Backlog item guncelle |
-| DELETE | /api/backlog/:id | Backlog'dan sil |
+| GET | /api/health | Sunucu durum kontrolu |
+| POST | /api/auth/register | Yeni hesap olustur, `user + accessToken` doner |
+| POST | /api/auth/login | Giris yap, `user + accessToken` doner |
+| GET | /api/backlog | (Bearer token) Kullanicinin backlog listesi |
+| POST | /api/backlog | (Bearer token) Backlog'a ekle |
+| PUT | /api/backlog/:id | (Bearer token) Backlog item guncelle |
+| DELETE | /api/backlog/:id | (Bearer token) Backlog'dan sil |
+| GET | /api/search?q=... | (Bearer token) TMDB + RAWG + Trakt birlesik arama |
+
+## Environment Notlari
+
+- Backend icin gereken degiskenler:
+	- `DB_URI`
+	- `DB_NAME`
+	- `JWT_SECRET` (verilmezse sadece local development fallback kullanilir)
+	- `TMDB_API_KEY`
+	- `RAWG_API_KEY`
+	- `TRAKT_CLIENT_ID`
+- Flutter istemcisi backend adresini `API_BASE_URL` ile okur.
+	- Ornek: `API_BASE_URL=http://192.168.1.105:5038`

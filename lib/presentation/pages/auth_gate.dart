@@ -26,6 +26,7 @@ class _AuthGateState extends State<AuthGate> {
   }
 
   void _logout() {
+    context.read<BacklogRepository>().clearSession();
     setState(() {
       _currentUser = null;
     });

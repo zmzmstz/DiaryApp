@@ -1,48 +1,78 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../../core/config/backend_config.dart';
 import '../../models/search_result.dart';
-import '../services/tmdb_service.dart';
-import '../services/rawg_service.dart';
-import '../services/trakt_service.dart';
+import '../../models/backlog_item.dart';
+import 'backlog_repository.dart';
 
 class ApiRepository {
-  final TmdbService _tmdbService;
-  final RawgService _rawgService;
-  final TraktService _traktService;
+  final BacklogRepository _backlogRepository;
 
   ApiRepository({
-    TmdbService? tmdbService,
-    RawgService? rawgService,
-    TraktService? traktService,
-  })  : _tmdbService = tmdbService ?? TmdbService(),
-        _rawgService = rawgService ?? RawgService(),
-        _traktService = traktService ?? TraktService();
+    required BacklogRepository backlogRepository,
+  }) : _backlogRepository = backlogRepository;
+
+  String get _baseUrl => BackendConfig.apiBaseUrl;
+
+  BacklogType _parseType(String? rawType) {
+    if (rawType == null) return BacklogType.hobby;
+    return BacklogType.values.firstWhere(
+      (type) => type.name == rawType,
+      orElse: () => BacklogType.hobby,
+    );
+  }
+
+  SearchResult _fromJson(Map<String, dynamic> json) {
+    return SearchResult(
+      externalId: json['externalId'] as String? ?? '',
+      title: json['title'] as String? ?? 'Unknown',
+      overview: json['overview'] as String?,
+      imageUrl: json['imageUrl'] as String?,
+      releaseDate: json['releaseDate'] as String?,
+      rating: (json['rating'] as num?)?.toDouble(),
+      type: _parseType(json['type'] as String?),
+      source: json['source'] as String? ?? 'unknown',
+    );
+  }
 
   /// Search across all APIs concurrently and merge results.
-  /// TMDB covers movies/series, RAWG covers games, Trakt adds extra movie/series results.
+  /// Backend proxies TMDB, RAWG and Trakt so API keys never live in the mobile app.
   Future<List<SearchResult>> searchAll(String query) async {
-    final results = await Future.wait([
-      _tmdbService.searchMulti(query),
-      _rawgService.searchGames(query),
-      _traktService.searchAll(query),
-    ]);
+    final cleanQuery = query.trim();
+    if (cleanQuery.isEmpty) return [];
 
-    final tmdbResults = results[0];
-    final rawgResults = results[1];
-    final traktResults = results[2];
+    final token = _backlogRepository.accessToken;
+    if (token == null || token.isEmpty) {
+      throw Exception('Not authenticated');
+    }
 
-    // Deduplicate: prefer TMDB over Trakt for same title
-    final tmdbTitles = tmdbResults.map((r) => r.title.toLowerCase()).toSet();
-    final uniqueTraktResults = traktResults
-        .where((r) => !tmdbTitles.contains(r.title.toLowerCase()))
+    final response = await http.get(
+      Uri.parse('$_baseUrl/search?q=${Uri.encodeQueryComponent(cleanQuery)}'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Search failed with status ${response.statusCode}');
+    }
+
+    final List<dynamic> data = jsonDecode(response.body) as List<dynamic>;
+    return data
+        .whereType<Map<String, dynamic>>()
+        .map(_fromJson)
         .toList();
-
-    return [...tmdbResults, ...rawgResults, ...uniqueTraktResults];
   }
 
-  Future<List<SearchResult>> searchMoviesAndSeries(String query) {
-    return _tmdbService.searchMulti(query);
+  Future<List<SearchResult>> searchMoviesAndSeries(String query) async {
+    final all = await searchAll(query);
+    return all
+        .where((item) => item.type == BacklogType.movie || item.type == BacklogType.series)
+        .toList();
   }
 
-  Future<List<SearchResult>> searchGames(String query) {
-    return _rawgService.searchGames(query);
+  Future<List<SearchResult>> searchGames(String query) async {
+    final all = await searchAll(query);
+    return all.where((item) => item.type == BacklogType.game).toList();
   }
 }

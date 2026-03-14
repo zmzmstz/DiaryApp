@@ -46,7 +46,10 @@ class MyApp extends StatelessWidget {
     return MultiRepositoryProvider(
       providers: [
         RepositoryProvider(create: (context) => BacklogRepository()),
-        RepositoryProvider(create: (context) => ApiRepository()),
+        RepositoryProvider(
+          create: (context) =>
+              ApiRepository(backlogRepository: context.read<BacklogRepository>()),
+        ),
       ],
       child: MultiBlocProvider(
         providers: [
