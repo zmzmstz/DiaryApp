@@ -8,7 +8,7 @@ class SearchResult {
   final String? releaseDate;
   final double? rating;
   final BacklogType type;
-  final String source; // "tmdb", "rawg", "trakt"
+  final String source; // "tmdb", "rawg", "trakt", "spotify", "open_library"
 
   const SearchResult({
     required this.externalId,

@@ -390,6 +390,9 @@ class _SearchResultCard extends StatelessWidget {
         BacklogType.movie => Icons.movie,
         BacklogType.series => Icons.tv,
         BacklogType.game => Icons.sports_esports,
+      BacklogType.song => Icons.music_note,
+      BacklogType.book => Icons.menu_book,
+      BacklogType.hobby => Icons.category,
         _ => Icons.category,
       };
 
@@ -397,6 +400,9 @@ class _SearchResultCard extends StatelessWidget {
         BacklogType.movie => Colors.deepPurple,
         BacklogType.series => Colors.indigo,
         BacklogType.game => Colors.redAccent,
+      BacklogType.song => Colors.green,
+      BacklogType.book => Colors.brown,
+      BacklogType.hobby => Colors.blueGrey,
         _ => Colors.grey,
       };
 
@@ -404,6 +410,9 @@ class _SearchResultCard extends StatelessWidget {
         BacklogType.movie => 'Film',
         BacklogType.series => 'Dizi',
         BacklogType.game => 'Oyun',
+      BacklogType.song => 'Muzik',
+      BacklogType.book => 'Kitap',
+      BacklogType.hobby => 'Hobi',
         _ => t.name,
       };
 
@@ -411,6 +420,8 @@ class _SearchResultCard extends StatelessWidget {
         'tmdb' => Colors.teal,
         'rawg' => Colors.orange,
         'trakt' => Colors.blue,
+      'spotify' => Colors.green,
+        'open_library' => Colors.brown,
         _ => Colors.grey,
       };
 }

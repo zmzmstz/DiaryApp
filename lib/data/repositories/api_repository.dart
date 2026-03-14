@@ -36,7 +36,7 @@ class ApiRepository {
   }
 
   /// Search across all APIs concurrently and merge results.
-  /// Backend proxies TMDB, RAWG and Trakt so API keys never live in the mobile app.
+  /// Backend proxies TMDB, RAWG, Trakt, Spotify and Open Library so API keys stay off mobile.
   Future<List<SearchResult>> searchAll(String query) async {
     final cleanQuery = query.trim();
     if (cleanQuery.isEmpty) return [];

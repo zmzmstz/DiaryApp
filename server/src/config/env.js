@@ -15,6 +15,8 @@ const env = {
   tmdbApiKey: process.env.TMDB_API_KEY || "",
   rawgApiKey: process.env.RAWG_API_KEY || "",
   traktClientId: process.env.TRAKT_CLIENT_ID || "",
+  spotifyClientId: process.env.SPOTIFY_CLIENT_ID || "",
+  spotifyClientSecret: process.env.SPOTIFY_CLIENT_SECRET || "",
 };
 
 module.exports = { env };

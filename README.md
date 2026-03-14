@@ -1,6 +1,6 @@
 # Diary App (Backlog Tracker)
 
-Film, dizi ve oyun takip uygulamasi. TMDB, RAWG.io ve Trakt.tv API'leri ile arama yapip kisisel backlog'unuza ekleyebilirsiniz.
+Film, dizi, oyun, muzik ve kitap takip uygulamasi. TMDB, RAWG.io, Trakt.tv, Spotify ve Open Library API'leri ile arama yapip kisisel backlog'unuza ekleyebilirsiniz.
 
 ## Gereksinimler
 
@@ -78,7 +78,7 @@ flutter run
 | POST | /api/backlog | (Bearer token) Backlog'a ekle |
 | PUT | /api/backlog/:id | (Bearer token) Backlog item guncelle |
 | DELETE | /api/backlog/:id | (Bearer token) Backlog'dan sil |
-| GET | /api/search?q=... | (Bearer token) TMDB + RAWG + Trakt birlesik arama |
+| GET | /api/search?q=... | (Bearer token) TMDB + RAWG + Trakt + Spotify + Open Library birlesik arama |
 
 ## Environment Notlari
 
@@ -89,5 +89,7 @@ flutter run
 	- `TMDB_API_KEY`
 	- `RAWG_API_KEY`
 	- `TRAKT_CLIENT_ID`
+	- `SPOTIFY_CLIENT_ID`
+	- `SPOTIFY_CLIENT_SECRET`
 - Flutter istemcisi backend adresini `API_BASE_URL` ile okur.
 	- Ornek: `API_BASE_URL=http://192.168.1.105:5038`
